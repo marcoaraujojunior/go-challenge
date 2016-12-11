@@ -1,4 +1,4 @@
-package main
+package database
 
 import(
 	"os"
@@ -6,14 +6,13 @@ import(
 	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/marcoaraujojunior/go-challenge/model"
 )
 
 var (
-	db *gorm.DB
+	Db *gorm.DB
 )
 
-func connect() {
+func Connect() {
 	dbConf := mysql.Config{
 		User:      os.Getenv("DB_USER"),
 		Passwd:    os.Getenv("DB_PASS"),
@@ -27,7 +26,6 @@ func connect() {
 
 	dbConn(dsn)
 
-	db.AutoMigrate(&model.Invoice{})
 }
 
 func dbConn(dsn string) {
@@ -38,5 +36,6 @@ func dbConn(dsn string) {
 		log.Fatal("[DB err ]: %s", err)
 	}
 
-	db = conn
+	Db = conn
 }
+
