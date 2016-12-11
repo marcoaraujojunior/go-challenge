@@ -18,37 +18,31 @@ func Get() Routes {
 }
 
 var routes = Routes {
-	Route{
-		"Index",
-		"GET",
-		"/v1",
-		Index,
-	},
-	Route{
+	Route {
 		"ListInvoices",
 		"GET",
 		"/v1/invoices",
 		ListInvoices,
 	},
-	Route{
+	Route {
 		"GetInvoice",
 		"GET",
 		"/v1/invoice/{invoiceNumber}",
 		GetInvoice,
 	},
-	Route{
+	Route {
 		"CreateInvoice",
 		"POST",
 		"/v1/invoice",
 		CreateInvoice,
 	},
-	Route{
+	Route {
 		"UpdateInvoice",
 		"PUT",
 		"/v1/invoice/{invoiceNumber}",
 		UpdateInvoice,
 	},
-	Route{
+	Route {
 		"UpdateInvoice",
 		"DELETE",
 		"/v1/invoice/{invoiceNumber}",
