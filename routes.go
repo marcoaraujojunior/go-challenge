@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"github.com/gorilla/mux"
-	"github.com/marcoaraujojunior/go-challenge/api/v1/invoice"
+	"api/v1/invoice"
 )
 
 var routes = invoice.Get()

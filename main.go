@@ -3,8 +3,8 @@ package main
 import(
 	"log"
 	"net/http"
-	"github.com/marcoaraujojunior/go-challenge/database"
-	"github.com/marcoaraujojunior/go-challenge/model"
+	"services/database"
+	"model"
 )
 
 func init() {

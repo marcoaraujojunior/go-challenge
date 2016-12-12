@@ -1,0 +1,31 @@
+version: '2'
+services:
+    apiGoChallenge:
+        image: golang:1.7.4
+        container_name: apiGoChallenge
+        restart: always
+        ports:
+         - "8888:80"
+        volumes:
+         - ./:/go/src
+        tty: true
+        environment:
+            DB_NAME: api
+            DB_USER: api
+            DB_PASS: api
+            DB_HOST: apiMySqlChallenge:3306
+
+    apiMySqlChallenge:
+        image: mysql:5.7
+        container_name: apiMySqlChallenge
+        restart: always
+        volumes:
+         - apiMySqlChallengeData:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: api
+            MYSQL_DATABASE: api
+            MYSQL_USER: api
+            MYSQL_PASSWORD: api
+
+volumes:
+    apiMySqlChallengeData: {}

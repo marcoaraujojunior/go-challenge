@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"github.com/marcoaraujojunior/go-challenge/model"
+	"model"
 )
 
 func ListInvoices(w http.ResponseWriter, r *http.Request) {
