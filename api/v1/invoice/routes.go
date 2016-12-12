@@ -7,6 +7,7 @@ import (
 type Route struct {
 	Name        string
 	Method      string
+	PathPrefix  string
 	Pattern     string
 	HandlerFunc http.HandlerFunc
 }
@@ -21,31 +22,36 @@ var routes = Routes {
 	Route {
 		"ListInvoices",
 		"GET",
-		"/v1/invoices",
+		"/v1",
+		"/invoices",
 		ListInvoices,
 	},
 	Route {
 		"GetInvoice",
 		"GET",
-		"/v1/invoice/{invoiceNumber}",
+		"/v1",
+		"/invoice/{invoiceNumber}",
 		GetInvoice,
 	},
 	Route {
 		"CreateInvoice",
 		"POST",
-		"/v1/invoice",
+		"/v1",
+		"/invoice",
 		CreateInvoice,
 	},
 	Route {
 		"UpdateInvoice",
 		"PUT",
-		"/v1/invoice/{invoiceNumber}",
+		"/v1",
+		"/invoice/{invoiceNumber}",
 		UpdateInvoice,
 	},
 	Route {
 		"UpdateInvoice",
 		"DELETE",
-		"/v1/invoice/{invoiceNumber}",
+		"/v1",
+		"/invoice/{invoiceNumber}",
 		DeleteInvoice,
 	},
 }

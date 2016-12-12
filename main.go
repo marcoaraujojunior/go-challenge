@@ -13,7 +13,15 @@ func init() {
 }
 
 func main() {
+
 	router := NewRouter()
 
 	log.Fatal(http.ListenAndServe(":80", router))
+
+//	router := NewRouter()
+//	http.Handle("/", Middleware(router))
+
+//	log.Fatal(http.ListenAndServe(":80", router))
 }
+
+

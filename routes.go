@@ -1,16 +1,30 @@
 package main
 
 import (
+	"log"
+	"net/http"
 	"github.com/gorilla/mux"
 	"github.com/marcoaraujojunior/go-challenge/api/v1/invoice"
 )
 
-func NewRouter() *mux.Router {
+var routes = invoice.Get()
+
+func NewRouter() *middleware {
+	r := loadRoutes()
+	m := MiddlewareChain()
+	m.AddHandlerFunc(token)
+	m.AddHandler(r)
+
+	return m
+}
+
+func loadRoutes() *mux.Router {
 
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range routes {
 		router.
 			Methods(route.Method).
+			PathPrefix(route.PathPrefix).
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(route.HandlerFunc)
@@ -19,5 +33,7 @@ func NewRouter() *mux.Router {
 	return router
 }
 
-var routes = invoice.Get()
+func token(rw http.ResponseWriter, r *http.Request) {
+	log.Println("running foo.")
+}
 
