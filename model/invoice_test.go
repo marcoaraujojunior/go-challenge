@@ -8,19 +8,22 @@ import (
 )
 
 func beforeTest() {
-	database.Connect()
-	database.Db.AutoMigrate(&model.Invoice{})
+	database.GetDb().AutoMigrate(&model.Invoice{})
 }
 
 func TestGetAllShoulShowAllInvoices(t *testing.T) {
 	beforeTest()
 	now := time.Now()
 	invoice := model.Invoice{ReferenceMonth:12, ReferenceYear:2016, Document:"069", Description:"Teste 1", Amount:12.32, DeactiveAt:now}
-	database.Db.Save(&invoice)
-	row := model.GetAll().Row()
+	database.GetDb().Save(&invoice)
+	row := model.GetAll()
 
-	var test model.Invoice
-	row.Scan(&test)
-	t.Errorf(test.Document)
+	var invoices []model.Invoice
+	database.GetDb().Find(&invoices)
+
+	if len(row) == 0 || len(row) != len(invoices) {
+		t.Errorf("Error to get all invoices")
+	}
+
 }
 

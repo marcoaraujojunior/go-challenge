@@ -8,8 +8,7 @@ import(
 )
 
 func init() {
-	database.Connect()
-	database.Db.AutoMigrate(&model.Invoice{})
+	database.GetDb().AutoMigrate(&model.Invoice{})
 }
 
 func main() {

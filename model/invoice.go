@@ -2,7 +2,6 @@ package model
 
 import (
 	"time"
-	"github.com/jinzhu/gorm"
 	"services/database"
 )
 
@@ -18,7 +17,9 @@ type Invoice struct {
 	DeactiveAt     time.Time `sql:"type:datetime"`
 }
 
-func GetAll() *gorm.DB {
-	invoices := []Invoice{}
-	return database.Db.Find(&invoices)
+func GetAll() []Invoice {
+	var invoices []Invoice
+	database.GetDb().Find(&invoices)
+	return invoices
 }
+

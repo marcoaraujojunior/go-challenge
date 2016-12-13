@@ -9,11 +9,28 @@ import(
 )
 
 var (
-	Db *gorm.DB
+	db *gorm.DB
 )
 
+func GetDb() *gorm.DB {
+	if (db == nil) {
+		Connect()
+	}
+	return db
+}
+
 func Connect() {
-	dbConf := mysql.Config{
+	config := GetConfig()
+	dsn := config.FormatDSN()
+	conn, err := gorm.Open("mysql", dsn)
+	if err != nil {
+		log.Fatal("[DB err ]: %s", err)
+	}
+	db = conn
+}
+
+func GetConfig() mysql.Config {
+	return mysql.Config{
 		User:      os.Getenv("DB_USER"),
 		Passwd:    os.Getenv("DB_PASS"),
 		Net:       "tcp",
@@ -21,21 +38,5 @@ func Connect() {
 		DBName:    os.Getenv("DB_NAME"),
 		ParseTime: true,
 	}
-
-	dsn := dbConf.FormatDSN()
-
-	dbConn(dsn)
-
-}
-
-func dbConn(dsn string) {
-	log.Printf("Connecting: %s", dsn)
-	conn, err := gorm.Open("mysql", dsn)
-
-	if err != nil {
-		log.Fatal("[DB err ]: %s", err)
-	}
-
-	Db = conn
 }
 
