@@ -12,17 +12,26 @@ var (
 	db *gorm.DB
 )
 
+func SetDb(conn *gorm.DB) {
+	db = conn
+}
+
 func GetDb() *gorm.DB {
 	if (db == nil) {
-		Connect()
+		connect()
 	}
 	return db
 }
 
-func Connect() {
+func OpenConnection(driver string, dsn string) (*gorm.DB, error) {
+	conn, err := gorm.Open(driver, dsn)
+	return conn, err
+}
+
+func connect() {
 	config := GetConfig()
 	dsn := config.FormatDSN()
-	conn, err := gorm.Open("mysql", dsn)
+	conn, err := OpenConnection("mysql", dsn)
 	if err != nil {
 		log.Fatal("[DB err ]: %s", err)
 	}
