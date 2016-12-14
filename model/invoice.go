@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"time"
 	"services/database"
 )
@@ -21,5 +22,31 @@ func GetAll() []Invoice {
 	var invoices []Invoice
 	database.GetDb().Find(&invoices)
 	return invoices
+}
+
+func Delete(invoiceNumber string) error {
+	var invoice Invoice
+	var err error
+	invoice, err = Get(invoiceNumber)
+	if (err != nil) {
+		return err
+	}
+	invoice.IsActive = false
+	invoice.DeactiveAt = time.Now()
+	return Save(invoice)
+}
+
+func Save(i Invoice) error {
+	return database.GetDb().Save(i).Error
+}
+
+func Get(invoiceNumber string) (Invoice, error) {
+	var invoice Invoice
+	var err error
+	if database.GetDb().Where(&Invoice{Document:invoiceNumber}).Find(&invoice).RecordNotFound() {
+		err = errors.New("Invoice [" + invoiceNumber + "] not found")
+		return invoice, err
+	}
+	return invoice, nil
 }
 
