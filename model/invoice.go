@@ -38,7 +38,7 @@ func buildOrder(p []string) string {
 func buildQuery(q map[string][]string) map[string]interface{} {
 	var query map[string]interface{}
 	var qf Invoice
-	var order string
+	var order, mention string
 	query = make(map[string]interface{})
 	if val, ok := q["sort"]; ok {
 		order = buildOrder(val)
@@ -52,7 +52,11 @@ func buildQuery(q map[string][]string) map[string]interface{} {
 	if val, ok := q["document"]; ok {
 		qf.Document = val[0]
 	}
+	if val, ok := q["q"]; ok {
+		mention = "%" + val[0] + "%"
+	}
 	query["condition"] = qf
+	query["mention"] = mention
 	query["order"] = order
 	return query
 }
@@ -60,7 +64,11 @@ func buildQuery(q map[string][]string) map[string]interface{} {
 func GetAll(q map[string][]string) []Invoice {
 	var invoices []Invoice
 	query := buildQuery(q)
-	database.GetDb().Order(query["order"]).Where(query["condition"]).Find(&invoices)
+	orm := database.GetDb().Order(query["order"]).Where(query["condition"])
+	if (query["mention"] != "") {
+		orm = orm.Where("document LIKE ?", query["mention"])
+	}
+	orm.Find(&invoices)
 	return invoices
 }
 
