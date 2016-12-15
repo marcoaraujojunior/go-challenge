@@ -6,6 +6,7 @@ import (
 	"services/database"
 	"strings"
 	"strconv"
+	"math"
 )
 
 type Invoice struct {
@@ -18,6 +19,13 @@ type Invoice struct {
 	IsActive       bool      `sql:"default:1"`
 	CreatedAt      time.Time `sql:"type:datetime;default:current_timestamp"`
 	DeactiveAt     time.Time `sql:"type:datetime"`
+}
+
+type Invoices struct {
+	Records  []Invoice
+	Page     int
+	PerPage  int
+	Total    int
 }
 
 func buildOrder(p []string) string {
@@ -39,6 +47,8 @@ func buildQuery(q map[string][]string) map[string]interface{} {
 	var query map[string]interface{}
 	var qf Invoice
 	var order, mention string
+	page := 1
+	per_page := 50
 	query = make(map[string]interface{})
 	if val, ok := q["sort"]; ok {
 		order = buildOrder(val)
@@ -52,24 +62,45 @@ func buildQuery(q map[string][]string) map[string]interface{} {
 	if val, ok := q["document"]; ok {
 		qf.Document = val[0]
 	}
+	if val, ok := q["per_page"]; ok {
+		per_page, _ = strconv.Atoi(val[0])
+	}
+	if val, ok := q["page"]; ok {
+		page, _ = strconv.Atoi(val[0])
+	}
 	if val, ok := q["q"]; ok {
 		mention = "%" + val[0] + "%"
 	}
 	query["condition"] = qf
 	query["mention"] = mention
 	query["order"] = order
+	query["limit"] = per_page
+	query["offset"] = ( ( page - 1 ) * per_page )
+	query["page"] = page
 	return query
 }
 
-func GetAll(q map[string][]string) []Invoice {
+func GetAll(q map[string][]string) Invoices {
 	var invoices []Invoice
+	var total int64
 	query := buildQuery(q)
-	orm := database.GetDb().Order(query["order"]).Where(query["condition"])
+	orm := database.GetDb()
 	if (query["mention"] != "") {
 		orm = orm.Where("document LIKE ?", query["mention"])
 	}
-	orm.Find(&invoices)
-	return invoices
+	orm = orm.Where(query["condition"]).
+		Order(query["order"]).
+		Limit(query["limit"]).
+		Offset(query["offset"]).
+		Find(&invoices).
+		Count(&total)
+
+
+	ceil := math.Ceil(float64(total) / query["limit"].(float64))
+	return Invoices{Records: invoices,
+		Page: query["page"].(int),
+		PerPage: query["limit"].(int),
+		Total: int(ceil)}
 }
 
 func Delete(invoiceNumber string) error {

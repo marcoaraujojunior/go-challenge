@@ -3,14 +3,50 @@ package invoice
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"model"
 	"github.com/gorilla/mux"
 	"io"
 	"io/ioutil"
+	"strings"
+	"strconv"
 )
 
+func buildLink(q url.Values, pp string, p string, t string, rel string, w http.ResponseWriter, r *http.Request) string {
+	var params []string
+	q["page"] = append(q["page"], p)
+	q["per_page"] = append(q["per_page"], pp)
+	for key, val := range q {
+		params = append(params, key + "=" + val[0])
+	}
+	return "<" + r.Host + r.URL.Path + "?" +strings.Join(params, "&") + "> ; rel=\"" + rel + "\""
+}
+
+func buildLinkNext(q url.Values, pp string, p string, t string, w http.ResponseWriter, r *http.Request) string {
+	page, _:= strconv.Atoi(p)
+	total, _ := strconv.Atoi(t)
+	nextPage := page + 1
+	if (nextPage >= total) {
+		return ""
+	}
+	return buildLink(q, pp, strconv.Itoa(nextPage), t, "next", w, r)
+}
+
 func ListInvoices(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(model.GetAll(r.URL.Query()))
+	var invoices model.Invoices
+	var lf, linkLast, ln, linkPrev, pp, p, t string
+	q := r.URL.Query()
+	invoices = model.GetAll(q)
+	pp = strconv.Itoa(invoices.PerPage)
+	p = strconv.Itoa(invoices.Page)
+	t = strconv.Itoa(invoices.Total)
+	lf = buildLink(q, pp, "1", t, "first", w, r)
+	ln = buildLinkNext(q, pp, p, t, w, r)
+	w.Header().Set("Link", ln + ", " +
+		linkLast + "; rel=\"last\" , " +
+		lf + "; rel=\"first\", " +
+		linkPrev +  "; rel=\"prev\"")
+	json.NewEncoder(w).Encode(invoices.Records)
 }
 
 func GetInvoice(w http.ResponseWriter, r *http.Request) {
