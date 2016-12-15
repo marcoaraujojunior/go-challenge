@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 	"services/database"
+	"strings"
+	"strconv"
 )
 
 type Invoice struct {
@@ -18,9 +20,47 @@ type Invoice struct {
 	DeactiveAt     time.Time `sql:"type:datetime"`
 }
 
-func GetAll() []Invoice {
+func buildOrder(p []string) string {
+	var orderBy []string
+	fields := strings.SplitN(p[0], ",", 3)
+	for _, field := range fields {
+		pair := strings.SplitN(string(field), "-", 2)
+		order := "ASC"
+		if len(pair) > 1 {
+			field = pair[1]
+			order = "DESC"
+		}
+		orderBy = append(orderBy, field + " " + order)
+	}
+	return strings.Join(orderBy, ",")
+}
+
+func buildQuery(q map[string][]string) map[string]interface{} {
+	var query map[string]interface{}
+	var qf Invoice
+	var order string
+	query = make(map[string]interface{})
+	if val, ok := q["sort"]; ok {
+		order = buildOrder(val)
+	}
+	if val, ok := q["month"]; ok {
+		qf.ReferenceMonth, _ = strconv.Atoi(val[0])
+	}
+	if val, ok := q["year"]; ok {
+		qf.ReferenceYear, _ = strconv.Atoi(val[0])
+	}
+	if val, ok := q["document"]; ok {
+		qf.Document = val[0]
+	}
+	query["condition"] = qf
+	query["order"] = order
+	return query
+}
+
+func GetAll(q map[string][]string) []Invoice {
 	var invoices []Invoice
-	database.GetDb().Find(&invoices)
+	query := buildQuery(q)
+	database.GetDb().Order(query["order"]).Where(query["condition"]).Find(&invoices)
 	return invoices
 }
 

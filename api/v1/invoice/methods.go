@@ -10,7 +10,7 @@ import (
 )
 
 func ListInvoices(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(model.GetAll())
+	json.NewEncoder(w).Encode(model.GetAll(r.URL.Query()))
 }
 
 func GetInvoice(w http.ResponseWriter, r *http.Request) {
