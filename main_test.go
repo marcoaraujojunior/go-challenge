@@ -35,7 +35,6 @@ func beforeTest() {
 		log.Fatal("[DB err ]: %s", err)
 	}
 	database.SetDb(conn)
-
 }
 
 func setQueryFunc(result string, columns []string) {
@@ -265,28 +264,26 @@ func TestListInvoicesShouldReturnStatus200AndFourLinksHeader(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	links := strings.SplitN(rr.Header()["Link"][0], ",", 4)
-
-	log.Println(links)
+	links := rr.Header()["Link"][0]
 
 	expectedLinkNext := `</v1/invoices?page=4&per_page=1> ; rel="next"`
-	if links[0] != expectedLinkNext {
-		t.Errorf("handler returned unexpected link header: got %v want %v", links[0], expectedLinkNext)
+	if !strings.ContainsAny(links, expectedLinkNext) {
+		t.Errorf("handler returned unexpected link header: got %v want %v", links, expectedLinkNext)
 	}
 
 	expectedLinkLast := `</v1/invoices?page=5&per_page=1> ; rel="last"`
-	if links[1] != expectedLinkLast {
-		t.Errorf("handler returned unexpected link header: got %v want %v", links[1], expectedLinkLast)
+	if !strings.ContainsAny(links, expectedLinkLast) {
+		t.Errorf("handler returned unexpected link header: got %v want %v", links, expectedLinkLast)
 	}
 
 	expectedLinkFirst := `</v1/invoices?page=1&per_page=1> ; rel="first"`
-	if links[2] != expectedLinkFirst {
-		t.Errorf("handler returned unexpected link header: got %v want %v", links[2], expectedLinkFirst)
+	if !strings.ContainsAny(links, expectedLinkFirst) {
+		t.Errorf("handler returned unexpected link header: got |%v| want |%v|", links, expectedLinkFirst)
 	}
 
 	expectedLinkPrev := `</v1/invoices?page=2&per_page=1> ; rel="prev"`
-	if links[3] != expectedLinkPrev {
-		t.Errorf("handler returned unexpected link header: got %v want %v", links[0], expectedLinkPrev)
+	if !strings.ContainsAny(links, expectedLinkPrev) {
+		t.Errorf("handler returned unexpected link header: got [%v] want [%v]", links, expectedLinkPrev)
 	}
 }
 
