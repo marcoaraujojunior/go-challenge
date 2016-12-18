@@ -9,6 +9,21 @@ import (
 	"math"
 )
 
+var (
+	month = map[int]string{
+		1: "January",
+		2: "February",
+		3: "March",
+		4: "April",
+		5: "May",
+		6: "June",
+		7: "July",
+		8: "August",
+		9: "September",
+		10: "October",
+		11: "November",
+		12: "December"}
+)
 type Invoice struct {
 	ID             uint      `sql:"AUTO_INCREMENT" gorm:"primary_key"`
 	ReferenceMonth int
@@ -82,25 +97,40 @@ func buildQuery(q map[string][]string) map[string]interface{} {
 
 func GetAll(q map[string][]string) Invoices {
 	var invoices []Invoice
-	var total int64
+	var total, count int
 	query := buildQuery(q)
-	orm := database.GetDb()
+	orm := database.GetDb().Debug()
+	if (query["mention"] != "") {
+		orm = orm.Where("document LIKE ?", query["mention"])
+	}
+	orm = orm.Where(query["condition"])
+    if query["order"] != "" {
+		orm = orm.Order(query["order"])
+    }
+	orm = orm.Limit(query["limit"]).
+		Offset(query["offset"]).
+		Find(&invoices)
+
+	count = toCount(query)
+
+	total = int(math.Ceil(float64(count) / float64(query["limit"].(int))))
+	return Invoices{Records: invoices,
+		Page: query["page"].(int),
+		PerPage: query["limit"].(int),
+		Total: total}
+}
+
+func toCount(query map[string]interface{}) int {
+	var invoices []Invoice
+	var total int
+	orm := database.GetDb().Debug()
 	if (query["mention"] != "") {
 		orm = orm.Where("document LIKE ?", query["mention"])
 	}
 	orm = orm.Where(query["condition"]).
-		Order(query["order"]).
-		Limit(query["limit"]).
-		Offset(query["offset"]).
 		Find(&invoices).
 		Count(&total)
-
-
-	ceil := math.Ceil(float64(total) / query["limit"].(float64))
-	return Invoices{Records: invoices,
-		Page: query["page"].(int),
-		PerPage: query["limit"].(int),
-		Total: int(ceil)}
+    return total
 }
 
 func Delete(invoiceNumber string) error {
@@ -137,7 +167,18 @@ func Create(attributes *Invoice) error {
 	return Save(attributes)
 }
 
+func inMonth(m int) bool {
+	if _, ok := month[m]; ok {
+		return true
+	}
+	return false
+}
+
 func Save(i *Invoice) error {
+	if (!inMonth(i.ReferenceMonth)) {
+		err := errors.New("Invalid month")
+		return err
+	}
 	return database.GetDb().Save(&i).Error
 }
 

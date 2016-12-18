@@ -12,10 +12,10 @@ import (
 	"strconv"
 )
 
-func buildLink(q url.Values, pp string, p string, t string, rel string, w http.ResponseWriter, r *http.Request) string {
+func buildLink(q url.Values, pp string, p string, rel string, w http.ResponseWriter, r *http.Request) string {
 	var params []string
-	q["page"] = append(q["page"], p)
-	q["per_page"] = append(q["per_page"], pp)
+	q["page"] = append([]string{}, p)
+	q["per_page"] = append([]string{}, pp)
 	for key, val := range q {
 		params = append(params, key + "=" + val[0])
 	}
@@ -26,26 +26,66 @@ func buildLinkNext(q url.Values, pp string, p string, t string, w http.ResponseW
 	page, _:= strconv.Atoi(p)
 	total, _ := strconv.Atoi(t)
 	nextPage := page + 1
-	if (nextPage >= total) {
+	if (nextPage > total) {
 		return ""
 	}
-	return buildLink(q, pp, strconv.Itoa(nextPage), t, "next", w, r)
+	return buildLink(q, pp, strconv.Itoa(nextPage), "next", w, r)
+}
+
+func buildLinkPrev(q url.Values, pp string, p string, w http.ResponseWriter, r *http.Request) string {
+	page, _:= strconv.Atoi(p)
+	prevPage := page - 1
+	if (prevPage < 1) {
+		return ""
+	}
+	return buildLink(q, pp, strconv.Itoa(prevPage), "prev", w, r)
+}
+
+func showLinks(invoices model.Invoices, q url.Values, w http.ResponseWriter, r *http.Request) {
+	var link []string
+	var lf, ll, ln, lp, pp, p, t string
+
+	pp = strconv.Itoa(invoices.PerPage)
+	p = strconv.Itoa(invoices.Page)
+	t = strconv.Itoa(invoices.Total)
+
+	if invoices.Page > 1 {
+		lf = buildLink(q, pp, "1", "first", w, r)
+	}
+
+	if invoices.Page < invoices.Total {
+		ll = buildLink(q, pp, t, "last", w, r)
+	}
+
+	ln = buildLinkNext(q, pp, p, t, w, r)
+	lp = buildLinkPrev(q, pp, p, w, r)
+
+	if ln != "" {
+		link = append(link, ln)
+	}
+
+	if ll != "" {
+		link = append(link, ll)
+	}
+
+	if lf != "" {
+		link = append(link, lf)
+	}
+
+	if lp != "" {
+		link = append(link, lp)
+	}
+
+	if strings.Join(link, ",") != "" {
+		w.Header().Set("Link", strings.Join(link, ","))
+	}
 }
 
 func ListInvoices(w http.ResponseWriter, r *http.Request) {
 	var invoices model.Invoices
-	var lf, linkLast, ln, linkPrev, pp, p, t string
 	q := r.URL.Query()
 	invoices = model.GetAll(q)
-	pp = strconv.Itoa(invoices.PerPage)
-	p = strconv.Itoa(invoices.Page)
-	t = strconv.Itoa(invoices.Total)
-	lf = buildLink(q, pp, "1", t, "first", w, r)
-	ln = buildLinkNext(q, pp, p, t, w, r)
-	w.Header().Set("Link", ln + ", " +
-		linkLast + "; rel=\"last\" , " +
-		lf + "; rel=\"first\", " +
-		linkPrev +  "; rel=\"prev\"")
+	showLinks(invoices, q, w, r)
 	json.NewEncoder(w).Encode(invoices.Records)
 }
 
