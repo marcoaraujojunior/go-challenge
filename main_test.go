@@ -8,12 +8,26 @@ import(
 	"net/url"
 	"net/http"
 	"net/http/httptest"
+	"encoding/json"
 	"api/v1/invoice"
 	"services/route"
 	"services/database"
 	"database/sql/driver"
 	"github.com/erikstmartin/go-testdb"
 )
+
+type testResult struct {
+	lastId       int64
+	affectedRows int64
+}
+
+func (r testResult) LastInsertId() (int64, error) {
+	return r.lastId, nil
+}
+
+func (r testResult) RowsAffected() (int64, error) {
+	return r.affectedRows, nil
+}
 
 func beforeTest() {
 	conn, err := database.OpenConnection("testdb", "")
@@ -253,6 +267,8 @@ func TestListInvoicesShouldReturnStatus200AndFourLinksHeader(t *testing.T) {
 
 	links := strings.SplitN(rr.Header()["Link"][0], ",", 4)
 
+	log.Println(links)
+
 	expectedLinkNext := `</v1/invoices?page=4&per_page=1> ; rel="next"`
 	if links[0] != expectedLinkNext {
 		t.Errorf("handler returned unexpected link header: got %v want %v", links[0], expectedLinkNext)
@@ -272,5 +288,74 @@ func TestListInvoicesShouldReturnStatus200AndFourLinksHeader(t *testing.T) {
 	if links[3] != expectedLinkPrev {
 		t.Errorf("handler returned unexpected link header: got %v want %v", links[0], expectedLinkPrev)
 	}
+}
+
+func TestUpdateInvoiceShouldReturnStatus500OnError(t *testing.T) {
+	beforeTest()
+	returnFiveRecords()
+	countFiveInvoices()
+
+	toUpdate := map[string]interface{}{
+		"referencemonth": 8,
+		"ReferenceYear": 2016,
+		"Document": "69",
+		"Description": "Teste 69",
+		"Amount": 69.69,
+	}
+	body, _ := json.Marshal(toUpdate)
+
+	req, err := http.NewRequest("PUT", "/v1/invoice/69", bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Authorization", "Bearer dXNlcm5hbWU6cGFzc3dvcmQ=")
+
+	rr := httptest.NewRecorder()
+
+	router := route.NewRouter()
+	router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+}
+
+func TestUpdateInvoiceShouldReturnStatus204(t *testing.T) {
+	beforeTest()
+
+	testdb.SetExecWithArgsFunc(func(query string, args []driver.Value) (result driver.Result, err error) {
+		if args[0] == "8" {
+			return testResult{1, 1}, nil
+		}
+		return testResult{1, 0}, nil
+	})
+
+	toUpdate := map[string]interface{}{
+		"referencemonth": 8,
+		"ReferenceYear": 2016,
+		"Document": "69",
+		"Description": "Teste 69",
+		"Amount": 69.69,
+	}
+	body, _ := json.Marshal(toUpdate)
+
+	req, err := http.NewRequest("PUT", "/v1/invoice/69", bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Authorization", "Bearer dXNlcm5hbWU6cGFzc3dvcmQ=")
+
+	rr := httptest.NewRecorder()
+
+	router := route.NewRouter()
+	router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusNoContent {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusNoContent)
+	}
+
 }
 
