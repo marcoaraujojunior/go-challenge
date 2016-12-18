@@ -16,11 +16,11 @@ services:
             DB_HOST: apiMySqlChallenge:3306
 
     apiMySqlChallenge:
-        image: mysql:5.7
+        image: mysql:5.6
         container_name: apiMySqlChallenge
         restart: always
         volumes:
-         - apiMySqlChallengeData:/var/lib/mysql
+         - apiMySqlData:/var/lib/mysql
         environment:
             MYSQL_ROOT_PASSWORD: api
             MYSQL_DATABASE: api
@@ -28,4 +28,4 @@ services:
             MYSQL_PASSWORD: api
 
 volumes:
-    apiMySqlChallengeData: {}
+    apiMySqlData: {}

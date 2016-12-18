@@ -4,6 +4,7 @@ import(
 	"log"
 	"net/http"
 	"services/database"
+	"services/route"
 	"model"
 )
 
@@ -13,7 +14,7 @@ func init() {
 
 func main() {
 
-	router := NewRouter()
+	router := route.NewRouter()
 
 	log.Fatal(http.ListenAndServe(":80", router))
 }

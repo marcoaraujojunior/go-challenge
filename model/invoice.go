@@ -99,7 +99,7 @@ func GetAll(q map[string][]string) Invoices {
 	var invoices []Invoice
 	var total, count int
 	query := buildQuery(q)
-	orm := database.GetDb().Debug()
+	orm := database.GetDb()
 	if (query["mention"] != "") {
 		orm = orm.Where("document LIKE ?", query["mention"])
 	}
@@ -123,7 +123,7 @@ func GetAll(q map[string][]string) Invoices {
 func toCount(query map[string]interface{}) int {
 	var invoices []Invoice
 	var total int
-	orm := database.GetDb().Debug()
+	orm := database.GetDb()
 	if (query["mention"] != "") {
 		orm = orm.Where("document LIKE ?", query["mention"])
 	}
@@ -185,6 +185,10 @@ func Save(i *Invoice) error {
 func Get(invoiceNumber string) (Invoice, error) {
 	var invoice Invoice
 	var err error
+	if (invoiceNumber == "") {
+		err = errors.New("Attribute invoice number is required")
+		return invoice, err
+	}
 	if database.GetDb().Where("document = ?", invoiceNumber).Find(&invoice).RecordNotFound() {
 		err = errors.New("Invoice [" + invoiceNumber + "] not found")
 		return invoice, err
