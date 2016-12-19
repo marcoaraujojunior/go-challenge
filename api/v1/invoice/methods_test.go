@@ -1,4 +1,4 @@
-package main_test
+package invoice_test
 
 import(
 	"log"
@@ -34,6 +34,7 @@ func beforeTest() {
 	if err != nil {
 		log.Fatal("[DB err ]: %s", err)
 	}
+	testdb.EnableTimeParsing(true)
 	database.SetDb(conn)
 }
 
@@ -57,10 +58,24 @@ func selectAllColumns() []string {
 		}
 }
 
+func returnInvalidRecord() {
+	result := `
+	4,7,2016,69,Teste 69,12.31,1,2016-12-20 11:15:37,0001-01-01T00:00:00Z
+	`
+	setQueryFunc(result, selectAllColumns())
+}
+
+func returnOneRecord() {
+	result := `
+	4,7,2016,69,Teste 69,12.31,1,2016-12-20T11:15:37Z,0001-01-01T00:00:00Z
+	`
+	setQueryFunc(result, selectAllColumns())
+}
+
 func returnTwoRecords() {
 	result := `
-	1,10,2016,069,Teste 1,12.32,1,2016-12-13 12:33:42,2016-12-14 18:59:31
-	11,12,2016,6969,Teste 1,12.32,1,2016-12-15 13:24:38,2016-12-14 18:59:31
+	1,10,2016,069,Teste 1,12.32,1,2016-12-20T11:15:37Z,0001-01-01T00:00:00Z
+	11,12,2016,6969,Teste 1,12.32,1,2016-12-20T11:15:37Z,0001-01-01T00:00:00Z
 	`
 	setQueryFunc(result, selectAllColumns())
 }
@@ -73,11 +88,11 @@ func countFiveInvoices() {
 
 func returnFiveRecords() {
 	result := `
-	1,10,2016,069,Teste 1,12.32,1,2016-12-13 12:33:42,2016-12-14 18:59:31
-	2,11,2016,696,Teste 1,12.32,1,2016-12-15 13:24:38,2016-12-14 18:59:31
-	3,8,2016,6,Teste 1,12.32,1,2016-12-15 13:24:38,2016-12-14 18:59:31
-	10,9,2016,969,Teste 1,12.32,1,2016-12-15 13:24:38,2016-12-14 18:59:31
-	11,12,2016,6969,Teste 1,12.32,1,2016-12-15 13:24:38,2016-12-14 18:59:31
+	1,10,2016,069,Teste 1,12.32,1,2016-12-20T11:15:37Z,0001-01-01T00:00:00Z
+	2,11,2016,696,Teste 1,12.32,1,2016-12-20T11:15:37Z,0001-01-01T00:00:00Z
+	3,8,2016,6,Teste 1,12.32,1,2016-12-20T11:15:37Z,0001-01-01T00:00:00Z
+	10,9,2016,969,Teste 1,12.32,1,2016-12-20T11:15:37Z,0001-01-01T00:00:00Z
+	11,12,2016,6969,Teste 1,12.32,1,2016-12-20T11:15:37Z,0001-01-01T00:00:00Z
 	`
 	setQueryFunc(result, selectAllColumns())
 }
@@ -158,7 +173,7 @@ func TestGetInvoiceShouldReturnStatus200AndReturnValues(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	expected := `{"ID":11,"ReferenceMonth":12,"ReferenceYear":2016,"Document":"6969","Description":"Teste 1","Amount":12.32,"IsActive":true,"CreatedAt":"0001-01-01T00:00:00Z","DeactiveAt":"0001-01-01T00:00:00Z"}`+ "\n"
+	expected := `{"ID":11,"ReferenceMonth":12,"ReferenceYear":2016,"Document":"6969","Description":"Teste 1","Amount":12.32,"IsActive":true,"CreatedAt":"2016-12-20T11:15:37Z","DeactiveAt":"0001-01-01T00:00:00Z"}`+ "\n"
 	if rr.Body.String() != expected {
 		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
 	}
@@ -210,7 +225,7 @@ func TestListInvoicesShouldReturnStatus200AndReturnValues(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	expected := `[{"ID":1,"ReferenceMonth":10,"ReferenceYear":2016,"Document":"069","Description":"Teste 1","Amount":12.32,"IsActive":true,"CreatedAt":"0001-01-01T00:00:00Z","DeactiveAt":"0001-01-01T00:00:00Z"},{"ID":11,"ReferenceMonth":12,"ReferenceYear":2016,"Document":"6969","Description":"Teste 1","Amount":12.32,"IsActive":true,"CreatedAt":"0001-01-01T00:00:00Z","DeactiveAt":"0001-01-01T00:00:00Z"}]`+ "\n"
+	expected := `[{"ID":1,"ReferenceMonth":10,"ReferenceYear":2016,"Document":"069","Description":"Teste 1","Amount":12.32,"IsActive":true,"CreatedAt":"2016-12-20T11:15:37Z","DeactiveAt":"0001-01-01T00:00:00Z"},{"ID":11,"ReferenceMonth":12,"ReferenceYear":2016,"Document":"6969","Description":"Teste 1","Amount":12.32,"IsActive":true,"CreatedAt":"2016-12-20T11:15:37Z","DeactiveAt":"0001-01-01T00:00:00Z"}]`+ "\n"
 	if rr.Body.String() != expected {
 		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
 	}
@@ -321,16 +336,17 @@ func TestUpdateInvoiceShouldReturnStatus500OnError(t *testing.T) {
 
 func TestUpdateInvoiceShouldReturnStatus204(t *testing.T) {
 	beforeTest()
+	returnOneRecord()
 
 	testdb.SetExecWithArgsFunc(func(query string, args []driver.Value) (result driver.Result, err error) {
-		if args[0] == "8" {
+		if args[0] == "7" {
 			return testResult{1, 1}, nil
 		}
 		return testResult{1, 0}, nil
 	})
 
 	toUpdate := map[string]interface{}{
-		"referencemonth": 8,
+		"referencemonth": 7,
 		"ReferenceYear": 2016,
 		"Document": "69",
 		"Description": "Teste 69",
@@ -352,6 +368,208 @@ func TestUpdateInvoiceShouldReturnStatus204(t *testing.T) {
 
 	if status := rr.Code; status != http.StatusNoContent {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusNoContent)
+	}
+
+}
+
+func TestUpdateInvoiceShouldReturnStatus500WhenInvalidJson(t *testing.T) {
+	beforeTest()
+	returnOneRecord()
+
+	testdb.SetExecWithArgsFunc(func(query string, args []driver.Value) (result driver.Result, err error) {
+		if args[0] == "7" {
+			return testResult{1, 1}, nil
+		}
+		return testResult{1, 0}, nil
+	})
+
+	body, _ := json.Marshal(`invalid json`)
+
+	req, err := http.NewRequest("PUT", "/v1/invoice/69", bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Authorization", "Bearer dXNlcm5hbWU6cGFzc3dvcmQ=")
+
+	rr := httptest.NewRecorder()
+
+	router := route.NewRouter()
+	router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusUnprocessableEntity {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnprocessableEntity)
+	}
+	expected := `{"Value":"string","Type":{},"Offset":14}` + "\n" + `Invalid month`+"\n"
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	}
+
+}
+
+func TestDeleteInvoiceShouldReturnStatus204(t *testing.T) {
+	beforeTest()
+	returnOneRecord()
+
+	testdb.SetExecWithArgsFunc(func(query string, args []driver.Value) (result driver.Result, err error) {
+		if args[0] == "7" {
+			return testResult{1, 1}, nil
+		}
+		return testResult{1, 0}, nil
+	})
+
+	data := url.Values{}
+	req, err := http.NewRequest("DELETE", "/v1/invoice/69", bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Authorization", "Bearer dXNlcm5hbWU6cGFzc3dvcmQ=")
+
+	rr := httptest.NewRecorder()
+
+	router := route.NewRouter()
+	router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusNoContent {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusNoContent)
+	}
+
+}
+
+func TestDeleteInvoiceShouldReturnStatus500(t *testing.T) {
+	beforeTest()
+	returnInvalidRecord()
+
+	testdb.SetExecWithArgsFunc(func(query string, args []driver.Value) (result driver.Result, err error) {
+		if args[0] == "7" {
+			return testResult{1, 1}, nil
+		}
+		return testResult{1, 0}, nil
+	})
+
+	data := url.Values{}
+	req, err := http.NewRequest("DELETE", "/v1/invoice/69", bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Authorization", "Bearer dXNlcm5hbWU6cGFzc3dvcmQ=")
+
+	rr := httptest.NewRecorder()
+
+	router := route.NewRouter()
+	router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+}
+
+func TestCreateInvoiceShouldReturnStatus204(t *testing.T) {
+	beforeTest()
+	returnNoneRecord()
+
+	testdb.SetExecWithArgsFunc(func(query string, args []driver.Value) (result driver.Result, err error) {
+		if args[0] == "7" {
+			return testResult{1, 1}, nil
+		}
+		return testResult{1, 0}, nil
+	})
+
+	toCreate := map[string]interface{}{
+		"referencemonth": 5,
+		"ReferenceYear": 2016,
+		"Document": "696969",
+		"Description": "Teste 6969696",
+		"Amount": 69.69,
+	}
+	body, _ := json.Marshal(toCreate)
+
+	req, err := http.NewRequest("POST", "/v1/invoice", bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Authorization", "Bearer dXNlcm5hbWU6cGFzc3dvcmQ=")
+
+	rr := httptest.NewRecorder()
+
+	router := route.NewRouter()
+	router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusNoContent {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusNoContent)
+	}
+
+}
+
+func TestCreateInvoiceShouldReturnStatus500WhenInvalidJson(t *testing.T) {
+	beforeTest()
+	returnNoneRecord()
+
+	testdb.SetExecWithArgsFunc(func(query string, args []driver.Value) (result driver.Result, err error) {
+		if args[0] == "7" {
+			return testResult{1, 1}, nil
+		}
+		return testResult{1, 0}, nil
+	})
+
+	body, _ := json.Marshal(`invalid json`)
+
+	req, err := http.NewRequest("POST", "/v1/invoice", bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Authorization", "Bearer dXNlcm5hbWU6cGFzc3dvcmQ=")
+
+	rr := httptest.NewRecorder()
+
+	router := route.NewRouter()
+	router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusUnprocessableEntity {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusUnprocessableEntity)
+	}
+
+}
+
+func TestCreateInvoiceShouldReturnStatus500WhenInvoiceAlreadyExist(t *testing.T) {
+	beforeTest()
+	returnOneRecord()
+
+	testdb.SetExecWithArgsFunc(func(query string, args []driver.Value) (result driver.Result, err error) {
+		if args[0] == "7" {
+			return testResult{1, 1}, nil
+		}
+		return testResult{1, 0}, nil
+	})
+
+	toCreate := map[string]interface{}{
+		"referencemonth": 5,
+		"ReferenceYear": 2016,
+		"Document": "69",
+		"Description": "Teste 69",
+		"Amount": 69.69,
+	}
+	body, _ := json.Marshal(toCreate)
+
+	req, err := http.NewRequest("POST", "/v1/invoice", bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Authorization", "Bearer dXNlcm5hbWU6cGFzc3dvcmQ=")
+
+	rr := httptest.NewRecorder()
+
+	router := route.NewRouter()
+	router.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
 	}
 
 }

@@ -1,0 +1,13 @@
+language: go
+
+go:
+  - 1.7.x
+install:
+  - go get github.com/gorilla/mux
+  - go get github.com/go-sql-driver/mysql
+  - go get -u github.com/jinzhu/gorm
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools/cmd/cover
+script:
+  - go test -covermode=count -coverprofile=coverage.out ./...
+  - goveralls -coverprofile=coverage.out -service travis-ci -repotoken $COVERALLS_TOKEN

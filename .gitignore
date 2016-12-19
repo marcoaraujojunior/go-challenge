@@ -1,3 +1,5 @@
 *.sw*
 github.com/**
 golang.org/**
+*.out
+*.html

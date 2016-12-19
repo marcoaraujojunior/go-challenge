@@ -179,7 +179,7 @@ func Save(i *Invoice) error {
 		err := errors.New("Invalid month")
 		return err
 	}
-	return database.GetDb().Save(&i).Error
+	return database.GetDb().Debug().Save(&i).Error
 }
 
 func Get(invoiceNumber string) (Invoice, error) {
