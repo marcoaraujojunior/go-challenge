@@ -2,8 +2,6 @@ language: go
 
 go:
   - 1.7.x
-env:
-  - "GOPATH=$GOPATH:$TRAVIS_BUILD_DIR"
 install:
   - go get github.com/gorilla/mux
   - go get github.com/go-sql-driver/mysql
@@ -12,5 +10,6 @@ install:
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
 script:
+  - export GOPATH=$GOPATH:$TRAVIS_BUILD_DIR
   - go test -covermode=count -coverprofile=coverage.out ./api/v1/invoice/
   - goveralls -coverprofile=coverage.out -service travis-ci -repotoken $COVERALLS_TOKEN
