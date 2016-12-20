@@ -12,5 +12,5 @@ install:
 script:
   - export GOPATH=$GOPATH:$TRAVIS_BUILD_DIR
   - ln -s $TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR/src
-  - go test -covermode=count -coverprofile=coverage.out ./api/v1/invoice/
+  - go test -covermode=count -coverprofile=coverage.out api/v1/invoice/
   - goveralls -coverprofile=coverage.out -service travis-ci -repotoken $COVERALLS_TOKEN
