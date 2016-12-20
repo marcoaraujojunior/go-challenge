@@ -145,13 +145,28 @@ func Delete(invoiceNumber string) error {
 	return Save(&invoice)
 }
 
-func Update(attributes *Invoice) error {
+func Update(attributes Invoice) error {
 	invoice, err := Get(attributes.Document)
 	if (err != nil) {
 		return err
 	}
-	attributes.ID = invoice.ID
-	return Save(attributes)
+	if attributes.ReferenceMonth > 0 {
+		invoice.ReferenceMonth = attributes.ReferenceMonth
+	}
+	if attributes.ReferenceYear > 0 {
+		invoice.ReferenceYear = attributes.ReferenceYear
+	}
+	if len(attributes.Document) > 0 {
+		invoice.Document = attributes.Document
+	}
+	if len(attributes.Description) > 0 {
+		invoice.Description = attributes.Description
+	}
+	if attributes.Amount > 0 {
+		invoice.Amount = attributes.Amount
+	}
+
+	return Save(&invoice)
 }
 
 func Create(attributes *Invoice) error {

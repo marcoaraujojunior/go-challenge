@@ -149,7 +149,7 @@ func UpdateInvoice(w http.ResponseWriter, r *http.Request) {
 	}
 	invoiceNumber := mux.Vars(r)["invoiceNumber"]
 	invoice.Document = invoiceNumber
-	err = model.Update(&invoice)
+	err = model.Update(invoice)
 	if (err != nil) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -3,6 +3,7 @@ services:
     apiGoChallenge:
         image: golang:1.7.4
         container_name: apiGoChallenge
+        command: bash -c '/go/src/build/go-challange'
         restart: always
         ports:
          - "8888:80"
@@ -14,6 +15,7 @@ services:
             DB_USER: api
             DB_PASS: api
             DB_HOST: apiMySqlChallenge:3306
+            GOPATH: /go:/go/src
 
     apiMySqlChallenge:
         image: mysql:5.6
