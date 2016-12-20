@@ -2,6 +2,8 @@ language: go
 
 go:
   - 1.7.x
+env:
+  - "GOPATH=$GOPATH:$TRAVIS_BUILD_DIR"
 install:
   - go get github.com/gorilla/mux
   - go get github.com/go-sql-driver/mysql
